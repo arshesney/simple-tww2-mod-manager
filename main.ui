@@ -103,7 +103,7 @@
      </widget>
     </item>
     <item row="0" column="0" colspan="11">
-     <widget class="QTableWidget" name="modListTbl">
+     <widget class="QTableView" name="modListTbl">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>

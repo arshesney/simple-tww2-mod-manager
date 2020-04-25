@@ -6,23 +6,55 @@ import json
 import pandas
 from PyQt5 import QtWidgets, uic, QtCore
 from main_window import Ui_MainWindow
+from steamworks import STEAMWORKS
 
+steam_app_id = 594570
+steam_api_library = os.path.join(os.getcwd() + '\\steam_api64.dll')
 steam_cmd = 'steam://run/594570'
 work_dir = os.environ['APPDATA'] + '\\MyModManager'
 failsafe = work_dir + '\\failsafe.dat'
 
-if not os.path.exists(failsafe):
+steamworks = STEAMWORKS()
+
+""" if not os.path.exists(failsafe):
     with open(failsafe, 'w', encoding="utf8") as outfile:
-        json.dump(mod_list, outfile)
+        json.dump(mod_list, outfile) """
 
 if not os.path.exists(work_dir):
     os.makedirs(work_dir)
 
+class ModTableModel(QtCore.QAbstractTableModel):
+    """ Table model for mod information """
+    def __init__(self, data):
+        super(ModTableModel,self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+    
+    def headerData(self, section, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == QtCore.Qt.Vertical:
+                return str(self._data.index[section])
+
 class ModConfig:
     """ load mod Json data and structure """
     def __init__(self):
+        super(ModConfig,self).__init__()
         self.raw_list = []
         self.mod_data = []
+        self.readLauncherConfig()
 
     def readLauncherConfig(self):
         launcher_dir = os.environ['APPDATA'] + '\\The Creative Assembly\\Launcher'
@@ -32,7 +64,7 @@ class ModConfig:
 
     def readJsonData(self, json_file):
         with open(json_file, encoding='utf8') as json_data:
-            self.raw_list = json.load(json_data)
+            self.mod_data = pandas.read_json(json_data)
 
 class MyModManager(QtWidgets.QMainWindow):
     """ Main application class """
@@ -50,11 +82,18 @@ class MyModManager(QtWidgets.QMainWindow):
         mods_table_cols = ['order', 'active', 'uuid', 'game', 'packfile', 'name', 'category', 'short', 'owned']
         hide_cols = ['game', 'packfile', 'owned']
         mods_table = self.ui.modListTbl
-        mods_table.setColumnCount(len(mods_table_cols))
-        mods_table.verticalHeader().setVisible(False)
-        mods_table.setHorizontalHeaderLabels(mods_table_cols)
+        mod_data = ModConfig()
+        mod_data_model = ModTableModel(mod_data.mod_data)
+        mods_table.setModel(mod_data_model)
+        
 
-        for index, col in enumerate(mods_table_cols):
+    def refreshBtnClicked(self):
+        self.populateTable()
+
+    def launchGameClicked(self):
+        os.startfile(steam_cmd)
+
+"""         for index, col in enumerate(mods_table_cols):
             if col in hide_cols:
                 mods_table.setColumnHidden(index, True) 
 
@@ -67,15 +106,9 @@ class MyModManager(QtWidgets.QMainWindow):
                     row_item.setCheckState(mod_row[value])
                 else:
                     row_item.setData(QtCore.Qt.DisplayRole, mod_row[value])
-                mods_table.setItem(row, mods_table_cols.index(value), row_item)
+                mods_table.setItem(row, mods_table_cols.index(value), row_item) 
 
-        mods_table.resizeColumnsToContents()
-
-    def refreshBtnClicked(self):
-        self.populateTable()
-
-    def launchGameClicked(self):
-        os.startfile(steam_cmd)
+        mods_table.resizeColumnsToContents() """
 
 if __name__ == '__main__':
     mod_manager_app = QtWidgets.QApplication(sys.argv)
