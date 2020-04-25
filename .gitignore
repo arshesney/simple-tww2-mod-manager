@@ -130,3 +130,7 @@ dmypy.json
 
 # vscode
 .vscode/
+
+# steam bins
+steam_api*
+*.dll
